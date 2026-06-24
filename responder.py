@@ -1,5 +1,6 @@
 from groq import Groq
-from config import GROQ_API_KEY, LLM_MODEL
+
+from config import GROQ_API_KEY, LLM_MODEL, SAFE_PROMPT, CAUTION_PROMPT, REFUSE_PROMPT
 
 _client = Groq(api_key=GROQ_API_KEY)
 
@@ -33,4 +34,20 @@ def generate_safe_response(question: str, tier: str) -> str:
 
     Return the response as a plain string.
     """
-    return "⚙️ Response generation not yet implemented. Complete Milestone 2 to activate answers."
+
+    prompts = {
+        "safe": SAFE_PROMPT,
+        "caution": CAUTION_PROMPT,
+        "refuse": REFUSE_PROMPT,
+    }
+
+    system_prompt = prompts.get(tier, CAUTION_PROMPT)
+
+    response = _client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": question},
+        ],
+    )
+    return response.choices[0].message.content or ""
